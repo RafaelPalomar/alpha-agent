@@ -11,6 +11,7 @@
   #:use-module (guix-agentic guardrails sandbox)
   #:use-module (guix-agentic capabilities memory backend)
   #:use-module (guix-agentic capabilities memory episodic)
+  #:use-module (guix-agentic capabilities structural)
   #:use-module (alpha-agent pks backend)
   #:use-module (entelequia packages denotecli)
   #:use-module (gnu packages version-control)            ; git
@@ -31,7 +32,9 @@
    (extra-packages (list git ripgrep))
    (sandbox (sandbox (network 'open) (no-cwd? #f)))))
 
-;; Compose both memory layers: durable PKS (Layer 3) + episodic working memory
-;; (Layer 2).  Each folds its rw store onto alpha's own sandbox.
-(define alpha (with-episodic (with-memory base-alpha pks)))
+;; Compose all three memory layers: durable PKS (Layer 3) + episodic working
+;; memory (Layer 2) + structural code index (Layer 1).  L2/L3 fold their rw
+;; stores onto alpha's own sandbox; L1's index lives in cwd (already mapped).
+(define alpha
+  (with-structural (with-episodic (with-memory base-alpha pks))))
 (define alpha-launcher (agent->package alpha))
