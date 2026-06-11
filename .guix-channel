@@ -1,0 +1,23 @@
+;; alpha-agent — a consumer channel defining the user's personal agent,
+;; bound to a PKS (Denote/org) durable-memory backend.
+;;
+;; Modules live at the repository root (module (alpha-agent …) -> alpha-agent/…),
+;; matching local development with `-L ~/src/alpha-agent`.
+;;
+;; Dependencies are aspirational until guix-agentic is published (follow-up #4).
+;; For local dev, compose with:
+;;   -L ~/src/guix-agentic -L ~/src/alpha-agent -L ~/.dotfiles
+;; The entelequia load path supplies the `denotecli` package (the mechanism the
+;; PKS backend calls); it is not declared a channel dependency here because it is
+;; the user's personal dotfiles config, not a published channel.
+(channel
+ (version 0)
+ (dependencies
+  (channel
+   (name guix-agentic)
+   (url "https://github.com/OUH-MESHLab/guix-agentic")
+   (branch "main"))
+  (channel
+   (name nonguix)
+   (url "https://gitlab.com/nonguix/nonguix")
+   (branch "master"))))
