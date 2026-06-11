@@ -17,14 +17,16 @@
 (define* (make-pks-memory-backend
           #:key
           denotecli                                       ; the denotecli package
-          (pks-dir "/home/rafael/pks")
-          (episodic-dir "/home/rafael/.local/share/agent-memory"))
+          (pks-dir "/home/rafael/pks"))
   "A <memory-backend> whose durable layer is the PKS at PKS-DIR, written via
-DENOTECLI.  PKS-DIR and EPISODIC-DIR are mounted read-write into the L1 sandbox
-by `with-memory` (folded onto the agent's own sandbox; meet cannot widen them)."
+DENOTECLI.  PKS-DIR is mounted read-write into the L1 sandbox by `with-memory`
+(folded onto the agent's own sandbox; meet cannot widen it).
+
+This backend owns ONLY the durable layer.  Layer-2 episodic memory is a separate
+concern, added with `with-episodic` (guix-agentic capabilities memory episodic)."
   (memory-backend
    (id 'pks)
    (policy pks-capture-policy)
    (skills (list pks-capture-skill))
    (tools (if denotecli (list denotecli) '()))
-   (shares (list pks-dir episodic-dir))))
+   (shares (list pks-dir))))
