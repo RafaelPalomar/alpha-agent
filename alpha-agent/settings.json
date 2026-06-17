@@ -1,0 +1,8 @@
+{
+  "defaultProvider": "openrouter",
+  "defaultModel": "anthropic/claude-sonnet-4.6",
+  "quietStartup": true,
+  "warnings": {
+    "anthropicExtraUsage": false
+  }
+}

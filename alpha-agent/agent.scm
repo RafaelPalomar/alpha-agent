@@ -14,6 +14,7 @@
   #:use-module (guix-agentic capabilities structural)
   #:use-module (alpha-agent pks backend)
   #:use-module (entelequia packages denotecli)
+  #:use-module (guix gexp)                               ; local-file
   #:use-module (gnu packages version-control)            ; git
   #:use-module (gnu packages rust-apps)                  ; ripgrep
   #:export (alpha alpha-launcher))
@@ -30,6 +31,9 @@
    (name "alpha")
    (backend pi-backend)
    (extra-packages (list git ripgrep))
+   ;; OpenRouter provider + a sensible default model, but NO enabledModels
+   ;; lock — alpha is the trusted personal agent, so `/model' ranges freely.
+   (settings (local-file "settings.json"))
    (sandbox (sandbox (network 'open) (no-cwd? #f)))))
 
 ;; Compose all three memory layers: durable PKS (Layer 3) + episodic working
