@@ -13,7 +13,7 @@
   #:use-module (guix-agentic capabilities memory episodic)
   #:use-module (guix-agentic capabilities structural)
   #:use-module (alpha-agent pks backend)
-  #:use-module (entelequia packages denotecli)
+  #:use-module (alpha-agent denotecli)                   ; vendored (channel-safe)
   #:use-module (guix gexp)                               ; local-file
   #:use-module (gnu packages version-control)            ; git
   #:use-module (gnu packages rust-apps)                  ; ripgrep
