@@ -3,6 +3,7 @@
   "defaultModel": "anthropic/claude-sonnet-4.6",
   "hideThinkingBlock": true,
   "quietStartup": true,
+  "sessionDir": ".pi/sessions",
   "warnings": {
     "anthropicExtraUsage": false
   }
