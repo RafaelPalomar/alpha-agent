@@ -13,6 +13,7 @@
   #:use-module (guix-agentic capabilities memory episodic)
   #:use-module (guix-agentic capabilities structural)
   #:use-module (guix-agentic capabilities provisioning)
+  #:use-module (guix-agentic capabilities git-ssh)
   #:use-module (alpha-agent pks backend)
   #:use-module (alpha-agent denotecli)                   ; vendored (channel-safe)
   #:use-module (guix gexp)                               ; local-file
@@ -50,7 +51,11 @@
 ;; `with-provisioning` adds the bare+worktrees project-provisioning capability
 ;; (cwd-only, no extra share) so "clone X and start working" produces a
 ;; multi-agent-ready layout — paired with PKS project onboarding (ADR-0002).
+;; `with-git-ssh` forwards the SSH agent + known_hosts into the sandbox so alpha
+;; can clone/push the user's PRIVATE repos (a deliberate relaxation — alpha is
+;; the trusted personal agent; ADR-0003).
 (define alpha
-  (with-provisioning
-   (with-structural (with-episodic (with-memory base-alpha pks)))))
+  (with-git-ssh
+   (with-provisioning
+    (with-structural (with-episodic (with-memory base-alpha pks))))))
 (define alpha-launcher (agent->package alpha))
