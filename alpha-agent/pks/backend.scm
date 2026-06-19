@@ -12,6 +12,7 @@
   #:use-module (guix-agentic capabilities memory backend)
   #:use-module (alpha-agent pks policy)
   #:use-module (alpha-agent pks capture)
+  #:use-module (alpha-agent pks onboard)
   #:export (make-pks-memory-backend))
 
 (define* (make-pks-memory-backend
@@ -27,6 +28,6 @@ concern, added with `with-episodic` (guix-agentic capabilities memory episodic).
   (memory-backend
    (id 'pks)
    (policy pks-capture-policy)
-   (skills (list pks-capture-skill))
+   (skills (list pks-capture-skill pks-project-onboard-skill))
    (tools (if denotecli (list denotecli) '()))
    (shares (list pks-dir))))

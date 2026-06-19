@@ -41,6 +41,16 @@ Capture when, and ONLY when:
 Do NOT capture routine task completions, commit messages, linter fixes, or
 trivial refactors — git and episodic memory already hold those.
 
+## Project onboarding (use the `pks-project-onboard` skill)
+
+When you BEGIN substantive work in a project directory, onboard it once: search
+`projects/` for an existing project note and load it for context if found.  If
+NONE exists, drop a single project STUB into `fleeting/` automatically (no
+asking) — same standing authorization as capture, same fleeting-only confinement.
+You may READ `projects/` but never WRITE it; promoting the stub to a real
+`projects/` note is the human-confirmed step.  Skip onboarding for transient or
+read-only sessions.
+
 ## Discipline (use the `pks-capture` skill)
 
 - SEARCH first with `denotecli` and APPEND/LINK to an existing note rather than
