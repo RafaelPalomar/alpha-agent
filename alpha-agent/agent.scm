@@ -26,6 +26,12 @@
 ;; `with-memory` adds denotecli + the ~/pks and episodic shares on top.
 ;; The sandbox posture (what beyond cwd + memory the agent may touch) is the
 ;; key per-agent decision — tune `share`/`expose` here.
+;;
+;; `preserve` carries OPENROUTER_API_KEY into the L1 container: the `alpha'
+;; wrapper (entelequia home service) reads the sops-decrypted key into the host
+;; env, but `guix shell -C` scrubs everything not explicitly preserved.  Without
+;; this the launcher only preserves PI_CODING_AGENT_DIR/TERM/SSL_CERT and pi
+;; can never authenticate to OpenRouter inside the sandbox.
 (define base-alpha
   (agent
    (name "alpha")
@@ -34,7 +40,8 @@
    ;; OpenRouter provider + a sensible default model, but NO enabledModels
    ;; lock — alpha is the trusted personal agent, so `/model' ranges freely.
    (settings (local-file "settings.json"))
-   (sandbox (sandbox (network 'open) (no-cwd? #f)))))
+   (sandbox (sandbox (network 'open) (no-cwd? #f)
+                     (preserve '("^OPENROUTER_API_KEY$"))))))
 
 ;; Compose all three memory layers: durable PKS (Layer 3) + episodic working
 ;; memory (Layer 2) + structural code index (Layer 1).  L2/L3 fold their rw
