@@ -12,6 +12,7 @@
   #:use-module (guix-agentic capabilities memory backend)
   #:use-module (guix-agentic capabilities memory episodic)
   #:use-module (guix-agentic capabilities structural)
+  #:use-module (guix-agentic capabilities provisioning)
   #:use-module (alpha-agent pks backend)
   #:use-module (alpha-agent denotecli)                   ; vendored (channel-safe)
   #:use-module (guix gexp)                               ; local-file
@@ -46,6 +47,10 @@
 ;; Compose all three memory layers: durable PKS (Layer 3) + episodic working
 ;; memory (Layer 2) + structural code index (Layer 1).  L2/L3 fold their rw
 ;; stores onto alpha's own sandbox; L1's index lives in cwd (already mapped).
+;; `with-provisioning` adds the bare+worktrees project-provisioning capability
+;; (cwd-only, no extra share) so "clone X and start working" produces a
+;; multi-agent-ready layout — paired with PKS project onboarding (ADR-0002).
 (define alpha
-  (with-structural (with-episodic (with-memory base-alpha pks))))
+  (with-provisioning
+   (with-structural (with-episodic (with-memory base-alpha pks)))))
 (define alpha-launcher (agent->package alpha))
