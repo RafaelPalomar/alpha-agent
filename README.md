@@ -42,8 +42,11 @@ memory deliberately relaxes confinement.
 
 ```sh
 guix shell -L ~/src/guix-agentic -L ~/src/alpha-agent -L ~/.dotfiles \
-  -m ~/src/alpha-agent/alpha-agent/manifests/alpha.scm -- alpha
+  -e '(@ (alpha-agent manifests alpha) alpha-packages)' -- alpha
 ```
+
+(The manifest is a module, not a bare `-m` file — `guix shell -e` takes the
+exported package list.  See the docstring in `manifests/alpha.scm`.)
 
 `pi` comes from the user's guix-home profile (`pi-backend` launcher `#f`) until
 `guix-agentic` owns pi from-source. `denotecli` is supplied by the entelequia
