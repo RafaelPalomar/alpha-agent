@@ -15,6 +15,7 @@
   #:use-module (guix-agentic capabilities provisioning)
   #:use-module (guix-agentic capabilities git-ssh)
   #:use-module (alpha-agent pks backend)
+  #:use-module (alpha-agent pks onboard)                 ; pks-onboard-steer
   #:use-module (alpha-agent denotecli)                   ; vendored (channel-safe)
   #:use-module (guix gexp)                               ; local-file
   #:use-module (gnu packages version-control)            ; git
@@ -39,6 +40,11 @@
    (name "alpha")
    (backend pi-backend)
    (extra-packages (list git ripgrep))
+   ;; A short, dedicated session-start steer so PKS project onboarding actually
+   ;; fires under task focus (the long memory policy alone got skipped) — same
+   ;; always-in-context pattern that made provisioning stick.  with-memory
+   ;; prepends the PKS policy fragment ahead of this.
+   (append-system (list pks-onboard-steer))
    ;; OpenRouter provider + a sensible default model, but NO enabledModels
    ;; lock — alpha is the trusted personal agent, so `/model' ranges freely.
    (settings (local-file "settings.json"))

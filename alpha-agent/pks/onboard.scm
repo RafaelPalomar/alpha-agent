@@ -11,7 +11,9 @@
 (define-module (alpha-agent pks onboard)
   #:use-module (guix gexp)
   #:use-module (guix-agentic packages skills)
-  #:export (pks-project-onboard-skill))
+  #:use-module (guix-agentic packages personas)   ; make-pi-fragment
+  #:export (pks-project-onboard-skill
+            pks-onboard-steer))
 
 (define %skill
   (plain-file "SKILL.md" "\
@@ -29,7 +31,13 @@ authorization: you READ `projects/` and WRITE only `fleeting/`.
 
 ## 1. Identify (read-only)
 
-    proj=\"$(basename \"$PWD\")\"
+The project is the GIT REPO you are working in, NOT necessarily `$PWD`.  If you
+just cloned/provisioned a repo into a subdirectory, `cd` into it (a worktree)
+first.  Derive the project name from the repo, falling back to the directory:
+
+    root=\"$(git rev-parse --show-toplevel 2>/dev/null || echo \"$PWD\")\"
+    url=\"$(git -C \"$root\" remote get-url origin 2>/dev/null || true)\"
+    proj=\"$(basename \"${url%.git}\")\"; [ -n \"$proj\" ] && [ \"$proj\" != / ] || proj=\"$(basename \"$root\")\"
     denotecli search \"$proj\" --dirs ~/pks/projects --tags project --title-only --max 1
 
 Parse the JSON.  One hit = REGISTERED; empty array = UNREGISTERED.
@@ -84,3 +92,35 @@ promote it:
    #:name "pks-project-onboard"
    #:skill-md %skill
    #:synopsis "Identify a project's PKS note, or auto-stub one into fleeting"))
+
+;;; --- always-in-context steer -----------------------------------------------
+;;; The memory policy mentions onboarding, but buried in a long doc it gets
+;;; skipped under task focus (observed: alpha cloned + worked SlicerHyperprobe
+;;; without ever touching the PKS).  A short, dedicated, imperative fragment —
+;;; the same pattern that made provisioning stick — keeps the session-start step
+;;; front-of-context so it actually fires.
+
+(define %steer
+  (plain-file "pks-session-start.md" "\
+# At the start of substantive project work — onboard the PKS FIRST
+
+Before exploring or planning a project, RUN the `pks-project-onboard` skill once.
+It is the FIRST thing you do, not an afterthought, and it is NOT optional for
+real project work (skip it only for one-off commands or read-only questions):
+
+1. Determine the project = the git repo you are working in (its remote name),
+   NOT `$PWD` — if you just cloned into a subdir, `cd` into it first.
+2. `denotecli search \"<proj>\" --dirs ~/pks/projects --tags project` — if a
+   project note exists, load it for context and say `(loaded PKS context)`.
+3. If none exists, auto-stub one into `~/pks/fleeting/` with a provenance drawer.
+
+You read `projects/`; you only ever write `fleeting/`.  Do this even when the
+user's request is purely about code — the memory step is part of the job.
+"))
+
+(define pks-onboard-steer
+  (make-pi-fragment
+   #:name "pks-session-start"
+   #:kind "append-system"
+   #:content %steer
+   #:synopsis "Run PKS project onboarding first thing in substantive work"))
