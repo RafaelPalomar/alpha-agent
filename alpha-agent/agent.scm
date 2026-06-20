@@ -48,8 +48,14 @@
    ;; OpenRouter provider + a sensible default model, but NO enabledModels
    ;; lock — alpha is the trusted personal agent, so `/model' ranges freely.
    (settings (local-file "settings.json"))
+   ;; preserve carries two host env vars through `guix shell -C`:
+   ;;   OPENROUTER_API_KEY — pi's auth (set by the entelequia alpha wrapper);
+   ;;   DENOTECLI_DIRS — points denotecli's default --dirs at the PKS, so a
+   ;;     flag-less `denotecli search' the agent runs still hits ~/pks instead
+   ;;     of the upstream ~/org default (observed false-negative empty results).
    (sandbox (sandbox (network 'open) (no-cwd? #f)
-                     (preserve '("^OPENROUTER_API_KEY$"))))))
+                     (preserve '("^OPENROUTER_API_KEY$"
+                                 "^DENOTECLI_DIRS$"))))))
 
 ;; Compose all three memory layers: durable PKS (Layer 3) + episodic working
 ;; memory (Layer 2) + structural code index (Layer 1).  L2/L3 fold their rw
