@@ -29,7 +29,7 @@ Run this once, early, when you begin substantive work in a project directory
 It mirrors the user's pks-project-context flow, but obeys the agent's standing
 authorization: you READ `projects/` and WRITE only `fleeting/`.
 
-## 1. Identify (read-only)
+## 1. Identify (read-only) — search BROADLY, then JUDGE the match
 
 The project is the GIT REPO you are working in, NOT necessarily `$PWD`.  If you
 just cloned/provisioned a repo into a subdirectory, `cd` into it (a worktree)
@@ -38,9 +38,21 @@ first.  Derive the project name from the repo, falling back to the directory:
     root=\"$(git rev-parse --show-toplevel 2>/dev/null || echo \"$PWD\")\"
     url=\"$(git -C \"$root\" remote get-url origin 2>/dev/null || true)\"
     proj=\"$(basename \"${url%.git}\")\"; [ -n \"$proj\" ] && [ \"$proj\" != / ] || proj=\"$(basename \"$root\")\"
-    denotecli search \"$proj\" --dirs ~/pks/projects --tags project --title-only --max 1
 
-Parse the JSON.  One hit = REGISTERED; empty array = UNREGISTERED.
+A PKS project note is often titled DIFFERENTLY from the repo (e.g. repo
+`SlicerHyperprobe` -> note `project-hyperprobe`; repo `Slicer-Liver` -> note
+`slicer-liver`).  So do NOT rely on an exact-name match — search broadly with
+the full name AND its meaningful sub-tokens (split CamelCase / `-` / `_`, drop
+generic words like `Slicer`, `Module`, `project`), then JUDGE the hits:
+
+    denotecli search \"$proj\" --dirs ~/pks/projects --tags project --max 5
+    # plus a core token if the full name returned nothing, e.g.:
+    denotecli search \"hyperprobe\" --dirs ~/pks/projects --tags project --max 5
+
+If ANY hit plausibly refers to THIS project (use judgement — matching core
+token, same domain), treat it as REGISTERED.  Only if nothing plausibly matches
+is it UNREGISTERED.  When genuinely unsure, prefer REGISTERED + load over
+creating a possibly-duplicate stub.
 
 ### Registered
 
@@ -110,9 +122,11 @@ real project work (skip it only for one-off commands or read-only questions):
 
 1. Determine the project = the git repo you are working in (its remote name),
    NOT `$PWD` — if you just cloned into a subdir, `cd` into it first.
-2. `denotecli search \"<proj>\" --dirs ~/pks/projects --tags project` — if a
-   project note exists, load it for context and say `(loaded PKS context)`.
-3. If none exists, auto-stub one into `~/pks/fleeting/` with a provenance drawer.
+2. Search `~/pks/projects` BROADLY (full name + core token — the note may be
+   named differently from the repo) and JUDGE: if any hit is plausibly this
+   project, load it and say `(loaded PKS context)`.
+3. Only if nothing plausibly matches, auto-stub one into `~/pks/fleeting/` with a
+   provenance drawer.  When unsure, prefer loading over stubbing.
 
 You read `projects/`; you only ever write `fleeting/`.  Do this even when the
 user's request is purely about code — the memory step is part of the job.
