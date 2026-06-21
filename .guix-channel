@@ -17,6 +17,13 @@
    (name guix-agentic)
    (url "https://github.com/OUH-MESHLab/guix-agentic")
    (branch "main"))
+  ;; forager.scm / manifests/forager.scm import (guix-codegraph packages
+  ;; codegraph); the channel build resolves modules only through declared
+  ;; dependencies, so this must be here (a -L flag masked the gap in local dev).
+  (channel
+   (name guix-codegraph)
+   (url "https://github.com/OUH-MESHLab/guix-codegraph")
+   (branch "main"))
   (channel
    (name nonguix)
    (url "https://gitlab.com/nonguix/nonguix")
