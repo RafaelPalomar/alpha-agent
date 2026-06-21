@@ -1,6 +1,6 @@
 {
   "defaultProvider": "openrouter",
-  "defaultModel": "anthropic/claude-sonnet-4.6",
+  "defaultModel": "google/gemini-3.1-flash-lite",
   "hideThinkingBlock": true,
   "quietStartup": true
 }
