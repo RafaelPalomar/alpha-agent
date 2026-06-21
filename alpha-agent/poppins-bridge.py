@@ -34,6 +34,9 @@ import websocket  # python-websocket-client
 URL = os.environ["MATTERMOST_URL"].rstrip("/")
 TOKEN = os.environ["MATTERMOST_TOKEN"]
 ALLOWED = {c for c in os.environ.get("MATTERMOST_ALLOWED_CHANNELS", "").split(",") if c}
+# MM's WS upgrader blocks any Origin != its SiteURL. We connect over loopback,
+# so the Origin must be set explicitly to the SiteURL (not the connect URL).
+ORIGIN = os.environ.get("MATTERMOST_ORIGIN", URL)
 POPPINS_CMD = os.environ.get("POPPINS_CMD", "poppins")
 USE_SESSION = os.environ.get("POPPINS_USE_SESSION", "1") == "1"
 
@@ -163,12 +166,11 @@ def main():
     threading.Thread(target=worker, daemon=True).start()
     while True:
         try:
-            # Mattermost's WS upgrader runs an Origin check and blocks the
-            # handshake ("URL Blocked because of CORS") when no Origin is sent.
-            # Send Origin = the connect URL so it reads as same-origin.
+            # Mattermost's WS upgrader blocks the handshake ("URL Blocked
+            # because of CORS") unless Origin matches its SiteURL.
             ws = websocket.WebSocketApp(
                 ws_url(),
-                header=["Authorization: Bearer " + TOKEN, "Origin: " + URL],
+                header=["Authorization: Bearer " + TOKEN, "Origin: " + ORIGIN],
                 on_message=on_message, on_open=on_open,
                 on_error=on_error, on_close=on_close)
             ws.run_forever(ping_interval=30, ping_timeout=10)
