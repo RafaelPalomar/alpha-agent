@@ -1,0 +1,6 @@
+{
+  "defaultProvider": "openrouter",
+  "defaultModel": "anthropic/claude-haiku-4.5",
+  "hideThinkingBlock": true,
+  "quietStartup": true
+}
