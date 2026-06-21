@@ -163,9 +163,12 @@ def main():
     threading.Thread(target=worker, daemon=True).start()
     while True:
         try:
+            # Mattermost's WS upgrader runs an Origin check and blocks the
+            # handshake ("URL Blocked because of CORS") when no Origin is sent.
+            # Send Origin = the connect URL so it reads as same-origin.
             ws = websocket.WebSocketApp(
                 ws_url(),
-                header=["Authorization: Bearer " + TOKEN],
+                header=["Authorization: Bearer " + TOKEN, "Origin: " + URL],
                 on_message=on_message, on_open=on_open,
                 on_error=on_error, on_close=on_close)
             ws.run_forever(ping_interval=30, ping_timeout=10)
