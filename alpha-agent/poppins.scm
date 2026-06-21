@@ -19,6 +19,8 @@
   #:use-module (guix-agentic capabilities memory backend)   ; memory-backend, with-memory
   #:use-module (guix-agentic packages personas)             ; make-pi-fragment
   #:use-module (alpha-agent denotecli)                      ; denotecli (vendored, channel-safe)
+  #:use-module (guix-agentic packages skills)               ; make-pi-skill
+  #:use-module (alpha-agent family-cal)                     ; family-cal (NextCloud calendar tool)
   #:use-module (guix gexp)                                  ; local-file
   #:export (poppins poppins-launcher))
 
@@ -64,18 +66,50 @@ confirm before anything happens."))
    #:content %poppins-md
    #:synopsis "Mary Poppins household persona + personal-domain wall + stage-don't-commit guardrail"))
 
+(define %poppins-cal-md
+  (plain-file "SKILL.md" "\
+---
+name: family-calendar
+description: Read the family agenda and STAGE proposed changes (never commit).
+---
+
+# family-calendar
+
+To read or propose changes to the family's NextCloud calendar, use `family-cal`:
+
+    family-cal agenda [--days N]                 # read the agenda
+    family-cal stage <summary> <start> [<end>] --member <who> --note <why>
+                                                 # PROPOSE a change (staged for a human)
+
+Times are CalDAV UTC stamps, e.g. 20260625T150000Z.
+
+You only ever STAGE.  A change is NOT applied until a human runs
+`family-cal commit <id>` — NEVER run `commit` yourself.  After staging, tell the
+family member what you've proposed and that it's awaiting their confirmation.
+"))
+
+(define poppins-cal-skill
+  (make-pi-skill
+   #:name "family-calendar"
+   #:skill-md %poppins-cal-md
+   #:synopsis "Read the family agenda; stage calendar changes for human confirmation"))
+
 (define base-poppins
   (agent
    (name "poppins")
    (backend pi-backend)
    (append-system (list poppins-steer))
    (settings (local-file "settings.poppins.json"))
-   ;; Personal-domain sandbox: open network (the LLM); NO cwd mapping (not a
-   ;; coding agent); NO work PKS, NO SSH-agent.  Only the OpenRouter key and
-   ;; DENOTECLI_DIRS (pointed at the PERSONAL root by the wrapper) cross in.
+   (extra-packages (list family-cal))            ; the NextCloud calendar tool
+   (skills (list poppins-cal-skill))
+   ;; Personal-domain sandbox: open network (the LLM + NextCloud); NO cwd
+   ;; mapping (not a coding agent); NO work PKS, NO SSH-agent.  Crossing in:
+   ;; the OpenRouter key, DENOTECLI_DIRS (personal root), and the NextCloud
+   ;; calendar env (NC_APPPW value + NC_USER/URL/CALENDAR) set by the wrapper.
    ;; with-memory folds the personal root share on top.
    (sandbox (sandbox (network 'open) (no-cwd? #t)
-                     (preserve '("^OPENROUTER_API_KEY$" "^DENOTECLI_DIRS$"))))))
+                     (preserve '("^OPENROUTER_API_KEY$" "^DENOTECLI_DIRS$"
+                                 "^NC_APPPW$" "^NC_USER$" "^NC_URL$" "^NC_CALENDAR$"))))))
 
 (define poppins (with-memory base-poppins personal-memory))
 (define poppins-launcher (agent->package poppins))
