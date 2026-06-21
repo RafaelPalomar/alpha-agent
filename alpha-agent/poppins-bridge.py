@@ -39,6 +39,8 @@ ALLOWED = {c for c in os.environ.get("MATTERMOST_ALLOWED_CHANNELS", "").split(",
 ORIGIN = os.environ.get("MATTERMOST_ORIGIN", URL)
 POPPINS_CMD = os.environ.get("POPPINS_CMD", "poppins")
 USE_SESSION = os.environ.get("POPPINS_USE_SESSION", "1") == "1"
+# Spawn the agent off the personal home so its cwd isn't /home/rafael.
+RUNDIR = os.environ.get("POPPINS_RUNDIR", "/tmp")
 
 API = URL + "/api/v4"
 HDR = {"Authorization": "Bearer " + TOKEN}
@@ -72,13 +74,13 @@ def run_poppins(text, session):
     args = base + (["--session-id", session] if (USE_SESSION and session) else [])
     try:
         p = subprocess.run(args, input=text, capture_output=True,
-                           text=True, timeout=600)
+                           text=True, timeout=600, cwd=RUNDIR)
         out = (p.stdout or "").strip()
         if p.returncode != 0 and args is not base:
             log("poppins rc", p.returncode, "with session; retrying plain. stderr:",
                 (p.stderr or "")[:300])
             p = subprocess.run(base, input=text, capture_output=True,
-                               text=True, timeout=600)
+                               text=True, timeout=600, cwd=RUNDIR)
             out = (p.stdout or "").strip()
         if not out:
             log("poppins gave no stdout; stderr:", (p.stderr or "")[:500])
@@ -96,11 +98,20 @@ WORK = queue.Queue()
 
 def worker():
     while True:
-        ch, root, text = WORK.get()
+        ch, root, text, sender, ctype = WORK.get()
         try:
-            reply = run_poppins(text, ("mm-" + root) if root else None)
+            where = ("a direct message" if ctype in ("D", "G")
+                     else "the family #household channel")
+            preamble = ("(This message is from family member '%s', sent via %s. "
+                        "Reply to them directly and address them by name.)\n\n"
+                        % (sender, where))
+            # Per-conversation continuity: one session per DM channel; per thread
+            # in shared channels.
+            session = (("mm-dm-" + ch) if ctype in ("D", "G")
+                       else ("mm-th-" + root))
+            reply = run_poppins(preamble + text, session if USE_SESSION else None)
             post(ch, reply, root)
-            log(f"-> replied ({len(reply)} chars)")
+            log("-> replied to %s (%d chars)" % (sender, len(reply)))
         except Exception as e:
             log("worker error:", e)
         finally:
@@ -137,10 +148,11 @@ def on_message(ws, raw):
     msg = (p.get("message") or "").strip()
     if not msg:
         return
-    log(f"<- [{ctype or '?'}] {data.get('sender_name', '?')}: {msg[:80]}")
+    sender = data.get("sender_name") or "someone"
+    log(f"<- [{ctype or '?'}] {sender}: {msg[:80]}")
     # Keep a conversation together: reply under the thread root.
     root = p.get("root_id") or p.get("id")
-    WORK.put((ch, root, msg))
+    WORK.put((ch, root, msg, sender, ctype))
 
 
 def on_open(ws):
