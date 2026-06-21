@@ -14,6 +14,7 @@
   #:use-module (guix-agentic capabilities structural)
   #:use-module (guix-agentic capabilities provisioning)
   #:use-module (guix-agentic capabilities git-ssh)
+  #:use-module (guix-agentic capabilities foraging)      ; with-foraging (queen)
   #:use-module (alpha-agent pks backend)
   #:use-module (alpha-agent pks onboard)                 ; pks-onboard-steer
   #:use-module (alpha-agent denotecli)                   ; vendored (channel-safe)
@@ -66,8 +67,14 @@
 ;; `with-git-ssh` forwards the SSH agent + known_hosts into the sandbox so alpha
 ;; can clone/push the user's PRIVATE repos (a deliberate relaxation — alpha is
 ;; the trusted personal agent; ADR-0003).
+;; `with-foraging` makes alpha a QUEEN: it gets the `dispatch' client + the
+;; shared dispatch dir on its sandbox, so it can delegate bounded PUBLIC
+;; subtasks to isolated foragers via the host-side broker (Stage 2) — without
+;; the daemon ever entering its sandbox.  alpha is also the curator: it reviews
+;; the forager <report> skeptically before trusting or recording it.
 (define alpha
-  (with-git-ssh
-   (with-provisioning
-    (with-structural (with-episodic (with-memory base-alpha pks))))))
+  (with-foraging
+   (with-git-ssh
+    (with-provisioning
+     (with-structural (with-episodic (with-memory base-alpha pks)))))))
 (define alpha-launcher (agent->package alpha))
