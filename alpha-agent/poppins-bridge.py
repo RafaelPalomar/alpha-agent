@@ -173,8 +173,7 @@ def worker():
                         "Reply to them directly and address them by name.)\n\n"
                         % (sender, where))
             prompt = hist + preamble + sender + ": " + text
-            session = (("mm-dm-" + ch) if ctype in ("D", "G")
-                       else ("mm-th-" + root))
+            session = "mm-" + ch  # one pi session per conversation (channel/DM)
             reply = run_poppins(prompt, session if USE_SESSION else None)
             post(ch, reply, root)
             # Record both turns (cap stored history at ~2x the replay window).
@@ -222,8 +221,10 @@ def on_message(ws, raw):
     if not msg:
         return
     sender = data.get("sender_name") or "someone"
-    # Keep a conversation together: reply under the thread root.
-    root = p.get("root_id") or p.get("id")
+    # Reply flat (top-level), like a normal chat message — only stay in a thread
+    # if the incoming message was itself threaded.  (Defaulting to the message's
+    # own id threaded every reply, hiding it from the channel/DM main view.)
+    root = p.get("root_id") or ""
     # Bridge-level chat controls — handled locally, never sent to the model.
     if msg.startswith("/"):
         cmd = msg.split()[0].lower()
