@@ -37,7 +37,7 @@ the domain marker; do not add a keyword for it).
 
 Keywords come ONLY from the closed vocabulary
 (_research _code _learn _project _lit _perm _fleeting _ntnu _ous _agenda _moc
-_meeting _hub _idea _review _contact).  Warn the user before extending it.
+_meeting _hub _idea _review _contact _slicer).  Warn the user before extending it.
 
 ## 3. Stamp provenance
 
