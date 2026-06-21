@@ -166,14 +166,16 @@ def main():
     threading.Thread(target=worker, daemon=True).start()
     while True:
         try:
-            # Mattermost's WS upgrader blocks the handshake ("URL Blocked
-            # because of CORS") unless Origin matches its SiteURL.
             ws = websocket.WebSocketApp(
                 ws_url(),
-                header=["Authorization: Bearer " + TOKEN, "Origin: " + ORIGIN],
+                header=["Authorization: Bearer " + TOKEN],
                 on_message=on_message, on_open=on_open,
                 on_error=on_error, on_close=on_close)
-            ws.run_forever(ping_interval=30, ping_timeout=10)
+            # MM's WS upgrader blocks the handshake ("URL Blocked because of
+            # CORS") unless Origin matches its SiteURL.  Set it via the origin=
+            # kwarg, NOT a custom header — websocket-client otherwise auto-fills
+            # Origin from the connect URL (the loopback) and that one wins.
+            ws.run_forever(ping_interval=30, ping_timeout=10, origin=ORIGIN)
         except Exception as e:
             log("run_forever crashed:", e)
         log("reconnecting in 5s...")
