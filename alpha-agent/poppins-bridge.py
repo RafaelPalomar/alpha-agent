@@ -100,6 +100,7 @@ def worker():
         try:
             reply = run_poppins(text, ("mm-" + root) if root else None)
             post(ch, reply, root)
+            log(f"-> replied ({len(reply)} chars)")
         except Exception as e:
             log("worker error:", e)
         finally:
@@ -128,11 +129,15 @@ def on_message(ws, raw):
     if (p.get("props") or {}).get("from_bot") == "true":
         return
     ch = p.get("channel_id", "")
-    if ALLOWED and ch not in ALLOWED:
+    ctype = data.get("channel_type", "")
+    # Always answer direct ("D") and group ("G") messages; for public/private
+    # channels ("O"/"P") require the allow-list (the family #household).
+    if ctype not in ("D", "G") and ALLOWED and ch not in ALLOWED:
         return
     msg = (p.get("message") or "").strip()
     if not msg:
         return
+    log(f"<- [{ctype or '?'}] {data.get('sender_name', '?')}: {msg[:80]}")
     # Keep a conversation together: reply under the thread root.
     root = p.get("root_id") or p.get("id")
     WORK.put((ch, root, msg))
