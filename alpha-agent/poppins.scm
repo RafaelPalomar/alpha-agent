@@ -21,7 +21,8 @@
   #:use-module (alpha-agent denotecli)                      ; denotecli (vendored, channel-safe)
   #:use-module (guix-agentic packages skills)               ; make-pi-skill
   #:use-module (alpha-agent family-cal)                     ; family-cal (NextCloud calendar tool)
-  #:use-module (guix gexp)                                  ; local-file
+  #:use-module (alpha-agent mcp)                            ; pi-mcp-extension (MCP-client)
+  #:use-module (guix gexp)                                  ; local-file, plain-file
   #:export (poppins poppins-launcher))
 
 ;;; PERSONAL domain root — NEVER the work PKS (~/pks).  Provisional path on this
@@ -94,6 +95,26 @@ family member what you've proposed and that it's awaiting their confirmation.
    #:skill-md %poppins-cal-md
    #:synopsis "Read the family agenda; stage calendar changes for human confirmation"))
 
+;;; MCP servers for the pi-mcp-extension.  One server: the nextcloud-mcp sidecar
+;;; on edison (host loopback, slice 3), giving the NextCloud hands
+;;; (Deck/Calendar/Files/Contacts/Sharing).  `lazy' = tools load on demand
+;;; (keeps the ~110-tool surface out of the base context for gemini-flash-lite).
+;;; Reachable because Poppins's sandbox shares the host net namespace (network
+;;; 'open).  Tools surface as nc_nextcloud_<tool>.
+(define %poppins-mcp-json
+  (plain-file "mcp.json" "\
+{
+  \"settings\": { \"toolPrefix\": \"nc\", \"requestTimeoutMs\": 30000 },
+  \"mcpServers\": {
+    \"nextcloud\": {
+      \"transport\": \"streamable-http\",
+      \"url\": \"http://127.0.0.1:8000/mcp\",
+      \"lifecycle\": \"lazy\"
+    }
+  }
+}
+"))
+
 (define base-poppins
   (agent
    (name "poppins")
@@ -102,6 +123,8 @@ family member what you've proposed and that it's awaiting their confirmation.
    (settings (local-file "settings.poppins.json"))
    (extra-packages (list family-cal))            ; the NextCloud calendar tool
    (skills (list poppins-cal-skill))
+   (extensions (list pi-mcp-extension))          ; MCP client (-> nextcloud-mcp)
+   (mcp-config %poppins-mcp-json)                ; the server config (CFGDIR/mcp.json)
    ;; Personal-domain sandbox: open network (the LLM + NextCloud); NO cwd
    ;; mapping (not a coding agent); NO work PKS, NO SSH-agent.  Crossing in:
    ;; the OpenRouter key, DENOTECLI_DIRS (personal root), and the NextCloud
