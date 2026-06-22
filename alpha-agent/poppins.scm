@@ -95,6 +95,48 @@ family member what you've proposed and that it's awaiting their confirmation.
    #:skill-md %poppins-cal-md
    #:synopsis "Read the family agenda; stage calendar changes for human confirmation"))
 
+(define %poppins-deck-md
+  (plain-file "SKILL.md" "\
+---
+name: family-deck
+description: Manage the family's NextCloud Deck task boards (create/share/cards).
+---
+
+# family-deck
+
+You manage the family's NextCloud Deck (task boards) with your `nc_nextcloud_*`
+tools.  You have full powers over boards you OWN: create boards, create
+stacks/lists, create/move/delete cards, and SHARE boards with family members.
+
+VISIBILITY (the golden rule): a task card is only useful if the family can SEE
+it.  Always put family cards on a board that is SHARED with the family.  A board
+you own but have NOT shared (e.g. \"Family Tasks\", \"Welcome to Nextcloud Deck!\")
+is INVISIBLE to everyone else — putting a card there looks done to you but the
+family never sees it.
+
+How to work:
+- Keep ONE canonical family task board that YOU own and have SHARED with the
+  family.  If \"Family Tasks\" exists, share it with rafael and maria (Edit) and
+  use it.  If none exists, create one and share it.
+- When you create any family board, immediately SHARE it with rafael and maria
+  (Edit); add the kids (leandro, adrian) when the board is for them.
+- You have full control on boards YOU own (create stacks + cards freely there).
+  On boards OTHERS own (e.g. rafael's \"Family\" board) you only have Edit: you may
+  add cards to EXISTING stacks, but you CANNOT create stacks (it returns 403) —
+  so don't try; use a board you own and have shared instead.
+- After creating or sharing, tell the family member the board name and confirm
+  it's shared so they know where to look.
+
+Safety: you may create, share, and edit cards directly.  But CONFIRM with a human
+before DELETING an entire board or stack (that destroys all the cards in it).
+"))
+
+(define poppins-deck-skill
+  (make-pi-skill
+   #:name "family-deck"
+   #:skill-md %poppins-deck-md
+   #:synopsis "Manage the family Deck: own + share family boards so cards are visible"))
+
 ;;; MCP servers for the pi-mcp-extension.  One server: the nextcloud-mcp sidecar
 ;;; on edison (host loopback, slice 3), giving the NextCloud hands
 ;;; (Deck/Calendar/Files/Contacts/Sharing).  `eager' = the extension connects +
@@ -125,7 +167,7 @@ family member what you've proposed and that it's awaiting their confirmation.
    (append-system (list poppins-steer))
    (settings (local-file "settings.poppins.json"))
    (extra-packages (list family-cal))            ; the NextCloud calendar tool
-   (skills (list poppins-cal-skill))
+   (skills (list poppins-cal-skill poppins-deck-skill))
    (extensions (list pi-mcp-extension))          ; MCP client (-> nextcloud-mcp)
    (mcp-config %poppins-mcp-json)                ; the server config (CFGDIR/mcp.json)
    ;; Personal-domain sandbox: open network (the LLM + NextCloud); NO cwd

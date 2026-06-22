@@ -132,6 +132,30 @@ def post(channel_id, message, root_id=""):
         log("post failed:", e)
 
 
+# --- typing indicator ------------------------------------------------------
+# Send Mattermost's user_typing over the bot's WS while a reply is being worked
+# out, so the channel shows "ms-poppins is typing…" instead of dead air.
+WS = None
+_seq = 10
+_seq_lock = threading.Lock()
+
+
+def send_typing(channel_id, root_id=""):
+    ws = WS
+    if ws is None:
+        return
+    global _seq
+    with _seq_lock:
+        _seq += 1
+        seq = _seq
+    try:
+        ws.send(json.dumps({"action": "user_typing", "seq": seq,
+                            "data": {"channel_id": channel_id,
+                                     "parent_id": root_id or ""}}))
+    except Exception:
+        pass
+
+
 def run_poppins(text, session):
     """Run `poppins -p' on TEXT, returning its stdout.  Falls back to a
     session-less call if the launcher rejects --session-id."""
@@ -164,6 +188,15 @@ WORK = queue.Queue()
 def worker():
     while True:
         ch, root, text, sender, ctype = WORK.get()
+        stop = threading.Event()
+
+        def _typer(ch=ch, root=root, stop=stop):
+            # MM clears the indicator after ~5s; refresh until the reply posts.
+            send_typing(ch, root)
+            while not stop.wait(3):
+                send_typing(ch, root)
+
+        threading.Thread(target=_typer, daemon=True).start()
         try:
             where = ("a direct message" if ctype in ("D", "G")
                      else "the family #household channel")
@@ -175,6 +208,7 @@ def worker():
             prompt = hist + preamble + sender + ": " + text
             session = "mm-" + ch  # one pi session per conversation (channel/DM)
             reply = run_poppins(prompt, session if USE_SESSION else None)
+            stop.set()
             post(ch, reply, root)
             # Record both turns (cap stored history at ~2x the replay window).
             with _stm_lock:
@@ -187,6 +221,7 @@ def worker():
         except Exception as e:
             log("worker error:", e)
         finally:
+            stop.set()
             WORK.task_done()
 
 
@@ -264,7 +299,7 @@ def ws_url():
 
 
 def main():
-    global BOT_ID
+    global BOT_ID, WS
     BOT_ID = whoami()
     os.makedirs(STM_DIR, exist_ok=True)
     log(f"logged in as bot {BOT_ID}; allowed channels: {ALLOWED or 'ALL'}; "
@@ -277,6 +312,7 @@ def main():
                 header=["Authorization: Bearer " + TOKEN],
                 on_message=on_message, on_open=on_open,
                 on_error=on_error, on_close=on_close)
+            WS = ws  # expose for the typing-indicator pinger
             # MM's WS upgrader blocks the handshake ("URL Blocked because of
             # CORS") unless Origin matches its SiteURL.  Set it via the origin=
             # kwarg, NOT a custom header — websocket-client otherwise auto-fills
