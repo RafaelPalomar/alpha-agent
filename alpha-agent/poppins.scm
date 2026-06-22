@@ -21,6 +21,7 @@
   #:use-module (alpha-agent denotecli)                      ; denotecli (vendored, channel-safe)
   #:use-module (guix-agentic packages skills)               ; make-pi-skill
   #:use-module (alpha-agent family-cal)                     ; family-cal (NextCloud calendar tool)
+  #:use-module (alpha-agent nc-deck-share)                  ; nc-deck-share (Deck board ACL)
   #:use-module (alpha-agent mcp)                            ; pi-mcp-extension (MCP-client)
   #:use-module (guix gexp)                                  ; local-file, plain-file
   #:export (poppins poppins-launcher))
@@ -55,10 +56,12 @@ memory is the family's personal store. You have NO access to work or
 professional data, calendars, or repositories, and you must never ask for them.
 If a request is about work, say plainly that it's outside your domain.
 
-Guardrail (hard): never auto-commit a change to the family's calendar, tasks, or
-files. Instead STAGE the change — state exactly what you would do, tag it with
-the target family member and the request that triggered it — and ask a human to
-confirm before anything happens."))
+Guardrail: for the family CALENDAR, never auto-commit — STAGE the change (state
+exactly what you would do, tag the family member + the request that triggered it)
+and ask a human to confirm before anything happens. For task boards (Deck) you
+manage things directly — create/share/edit cards as your family-deck skill
+describes — but always confirm with a human before a destructive delete (an
+entire board or stack)."))
 
 (define poppins-steer
   (make-pi-fragment
@@ -114,21 +117,31 @@ you own but have NOT shared (e.g. \"Family Tasks\", \"Welcome to Nextcloud Deck!
 is INVISIBLE to everyone else — putting a card there looks done to you but the
 family never sees it.
 
-How to work:
-- Keep ONE canonical family task board that YOU own and have SHARED with the
-  family.  If \"Family Tasks\" exists, share it with rafael and maria (Edit) and
-  use it.  If none exists, create one and share it.
-- When you create any family board, immediately SHARE it with rafael and maria
-  (Edit); add the kids (leandro, adrian) when the board is for them.
-- You have full control on boards YOU own (create stacks + cards freely there).
-  On boards OTHERS own (e.g. rafael's \"Family\" board) you only have Edit: you may
-  add cards to EXISTING stacks, but you CANNOT create stacks (it returns 403) —
-  so don't try; use a board you own and have shared instead.
-- After creating or sharing, tell the family member the board name and confirm
-  it's shared so they know where to look.
+Sharing a board (IMPORTANT): your MCP tools create boards/stacks/cards but they
+CANNOT share a board.  To share, use the `nc-deck-share` command:
 
-Safety: you may create, share, and edit cards directly.  But CONFIRM with a human
-before DELETING an entire board or stack (that destroys all the cards in it).
+    nc-deck-share acl   <board-id>                     # see who a board is shared with
+    nc-deck-share share <board-id> <user> [--manage]   # share (edit by default)
+
+Usernames are: rafael, maria, leandro, adrian.
+
+How to work:
+- Keep ONE canonical family task board that YOU own and have shared.  If
+  \"Family Tasks\" exists, run `nc-deck-share share <its id> rafael` and
+  `nc-deck-share share <its id> maria`, then use it.  If none exists, create one
+  (MCP create_board) and share it the same way.
+- Whenever you create a family board, immediately share it with rafael and maria
+  (add leandro/adrian when it is for them).
+- You have full control on boards YOU own (create stacks + cards freely there).
+  On boards OTHERS own (e.g. rafael's \"Family\" board) you only have Edit: add
+  cards to EXISTING stacks, but do NOT try to create stacks there (it 403s) —
+  use a board you own and have shared instead.
+- After creating/sharing, tell the family member the board name and that it's
+  shared, so they know where to look.
+
+Actions: creating boards/stacks/cards, sharing, and editing cards you may do
+DIRECTLY (this is your job — no staging).  Only CONFIRM with a human before
+DELETING an entire board or stack (that destroys all the cards in it).
 "))
 
 (define poppins-deck-skill
@@ -166,7 +179,7 @@ before DELETING an entire board or stack (that destroys all the cards in it).
    (backend pi-backend)
    (append-system (list poppins-steer))
    (settings (local-file "settings.poppins.json"))
-   (extra-packages (list family-cal))            ; the NextCloud calendar tool
+   (extra-packages (list family-cal nc-deck-share)) ; calendar tool + Deck board sharing
    (skills (list poppins-cal-skill poppins-deck-skill))
    (extensions (list pi-mcp-extension))          ; MCP client (-> nextcloud-mcp)
    (mcp-config %poppins-mcp-json)                ; the server config (CFGDIR/mcp.json)
