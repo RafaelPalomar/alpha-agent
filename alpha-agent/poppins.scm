@@ -20,7 +20,6 @@
   #:use-module (guix-agentic packages personas)             ; make-pi-fragment
   #:use-module (alpha-agent denotecli)                      ; denotecli (vendored, channel-safe)
   #:use-module (guix-agentic packages skills)               ; make-pi-skill
-  #:use-module (alpha-agent family-cal)                     ; family-cal (NextCloud calendar tool)
   #:use-module (alpha-agent nc-deck-share)                  ; nc-deck-share (Deck board ACL)
   #:use-module (alpha-agent mcp)                            ; pi-mcp-extension (MCP-client)
   #:use-module (gnu packages nss)                           ; nss-certs (CA bundle for HTTPS tools)
@@ -57,12 +56,10 @@ memory is the family's personal store. You have NO access to work or
 professional data, calendars, or repositories, and you must never ask for them.
 If a request is about work, say plainly that it's outside your domain.
 
-Guardrail: for the family CALENDAR, never auto-commit — STAGE the change (state
-exactly what you would do, tag the family member + the request that triggered it)
-and ask a human to confirm before anything happens. For task boards (Deck) you
-manage things directly — create/share/edit cards as your family-deck skill
-describes — but always confirm with a human before a destructive delete (an
-entire board or stack)."))
+Guardrail: you manage the family's calendar and task boards (Deck) directly with
+your NextCloud tools — read, create, update, and share as your family-calendar
+and family-deck skills describe; that is your job. Always CONFIRM with a human
+before a DESTRUCTIVE delete: an entire Deck board or stack, or a calendar event."))
 
 (define poppins-steer
   (make-pi-fragment
@@ -75,22 +72,18 @@ entire board or stack)."))
   (plain-file "SKILL.md" "\
 ---
 name: family-calendar
-description: Read the family agenda and STAGE proposed changes (never commit).
+description: Read and manage the family's NextCloud calendar via the MCP tools.
 ---
 
 # family-calendar
 
-To read or propose changes to the family's NextCloud calendar, use `family-cal`:
+Manage the family's NextCloud calendar with your `nc_nextcloud_*` calendar tools
+(list calendars, read the agenda/events, create and update events).  Use them
+directly — that is your job.
 
-    family-cal agenda [--days N]                 # read the agenda
-    family-cal stage <summary> <start> [<end>] --member <who> --note <why>
-                                                 # PROPOSE a change (staged for a human)
-
-Times are CalDAV UTC stamps, e.g. 20260625T150000Z.
-
-You only ever STAGE.  A change is NOT applied until a human runs
-`family-cal commit <id>` — NEVER run `commit` yourself.  After staging, tell the
-family member what you've proposed and that it's awaiting their confirmation.
+- When you add an event, put it on a calendar the relevant family members can
+  see, and tell them what you added.
+- Always CONFIRM with a human before DELETING an event or any destructive change.
 "))
 
 (define poppins-cal-skill
@@ -190,7 +183,7 @@ DELETING an entire board or stack (that destroys all the cards in it).
    ;; tools (family-cal, nc-deck-share) can't verify TLS inside the L1 sandbox
    ;; (the host's SSL_CERT_FILE path isn't valid there).  The wrapper points
    ;; SSL_CERT_FILE at this profile's bundle.
-   (extra-packages (list family-cal nc-deck-share nss-certs))
+   (extra-packages (list nc-deck-share nss-certs))
    (skills (list poppins-cal-skill poppins-deck-skill))
    (extensions (list pi-mcp-extension))          ; MCP client (-> nextcloud-mcp)
    (mcp-config %poppins-mcp-json)                ; the server config (CFGDIR/mcp.json)
