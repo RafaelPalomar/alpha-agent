@@ -117,13 +117,19 @@ you own but have NOT shared (e.g. \"Family Tasks\", \"Welcome to Nextcloud Deck!
 is INVISIBLE to everyone else — putting a card there looks done to you but the
 family never sees it.
 
-Sharing a board (IMPORTANT): your MCP tools create boards/stacks/cards but they
-CANNOT share a board.  To share, use the `nc-deck-share` command:
+Sharing a board (CRITICAL — read carefully): the MCP `nc_share_*` tools share
+FILES, not Deck boards; calling them on a board fails with 404.  NEVER use an
+`nc_share_*` tool to share a board.  Instead you MUST run the shell command
+`nc-deck-share` with your bash/shell tool:
 
     nc-deck-share acl   <board-id>                     # see who a board is shared with
     nc-deck-share share <board-id> <user> [--manage]   # share (edit by default)
 
-Usernames are: rafael, maria, leandro, adrian.
+It is a normal command-line program on your PATH — run it through bash, do not
+look for an MCP tool by that name.  Usernames are: rafael, maria, leandro, adrian.
+So to share board 7 with the parents you literally run, via bash:
+    nc-deck-share share 7 rafael
+    nc-deck-share share 7 maria
 
 How to work:
 - Keep ONE canonical family task board that YOU own and have shared.  If
