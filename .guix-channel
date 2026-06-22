@@ -24,6 +24,13 @@
    (name guix-codegraph)
    (url "https://github.com/OUH-MESHLab/guix-codegraph")
    (branch "main"))
+  ;; mcp.scm imports (guix-openclaw packages node-openclaw-deps) for the MCP SDK
+  ;; + zod used to bundle pi-mcp-extension; the channel build resolves modules
+  ;; only through declared deps (a -L flag masked the gap in local dev).
+  (channel
+   (name guix-openclaw)
+   (url "https://github.com/OUH-MESHLab/guix-openclaw")
+   (branch "main"))
   (channel
    (name nonguix)
    (url "https://gitlab.com/nonguix/nonguix")
