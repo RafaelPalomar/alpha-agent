@@ -23,6 +23,7 @@
   #:use-module (alpha-agent family-cal)                     ; family-cal (NextCloud calendar tool)
   #:use-module (alpha-agent nc-deck-share)                  ; nc-deck-share (Deck board ACL)
   #:use-module (alpha-agent mcp)                            ; pi-mcp-extension (MCP-client)
+  #:use-module (gnu packages certs)                         ; nss-certs (CA bundle for HTTPS tools)
   #:use-module (guix gexp)                                  ; local-file, plain-file
   #:export (poppins poppins-launcher))
 
@@ -185,7 +186,11 @@ DELETING an entire board or stack (that destroys all the cards in it).
    (backend pi-backend)
    (append-system (list poppins-steer))
    (settings (local-file "settings.poppins.json"))
-   (extra-packages (list family-cal nc-deck-share)) ; calendar tool + Deck board sharing
+   ;; nss-certs: the tool profile must carry a CA bundle, else the python HTTPS
+   ;; tools (family-cal, nc-deck-share) can't verify TLS inside the L1 sandbox
+   ;; (the host's SSL_CERT_FILE path isn't valid there).  The wrapper points
+   ;; SSL_CERT_FILE at this profile's bundle.
+   (extra-packages (list family-cal nc-deck-share nss-certs))
    (skills (list poppins-cal-skill poppins-deck-skill))
    (extensions (list pi-mcp-extension))          ; MCP client (-> nextcloud-mcp)
    (mcp-config %poppins-mcp-json)                ; the server config (CFGDIR/mcp.json)
