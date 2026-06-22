@@ -97,10 +97,13 @@ family member what you've proposed and that it's awaiting their confirmation.
 
 ;;; MCP servers for the pi-mcp-extension.  One server: the nextcloud-mcp sidecar
 ;;; on edison (host loopback, slice 3), giving the NextCloud hands
-;;; (Deck/Calendar/Files/Contacts/Sharing).  `lazy' = tools load on demand
-;;; (keeps the ~110-tool surface out of the base context for gemini-flash-lite).
-;;; Reachable because Poppins's sandbox shares the host net namespace (network
-;;; 'open).  Tools surface as nc_nextcloud_<tool>.
+;;; (Deck/Calendar/Files/Contacts/Sharing).  `eager' = the extension connects +
+;;; discovers tools at session_start; `lazy' would require a manual `/mcp:start'
+;;; command, which `poppins -p' (one-shot) never issues — so eager is required
+;;; for an always-on chat agent.  Reachable because Poppins's sandbox shares the
+;;; host net namespace (network 'open).  Tools surface as nc_nextcloud_<tool>.
+;;; TODO: the server exposes ~110 tools eagerly — scope its enabled apps to keep
+;;; the context manageable for gemini-3.1-flash-lite.
 (define %poppins-mcp-json
   (plain-file "mcp.json" "\
 {
@@ -109,7 +112,7 @@ family member what you've proposed and that it's awaiting their confirmation.
     \"nextcloud\": {
       \"transport\": \"streamable-http\",
       \"url\": \"http://127.0.0.1:8000/mcp\",
-      \"lifecycle\": \"lazy\"
+      \"lifecycle\": \"eager\"
     }
   }
 }
