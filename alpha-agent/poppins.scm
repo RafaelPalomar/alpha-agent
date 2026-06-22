@@ -23,7 +23,7 @@
   #:use-module (alpha-agent family-cal)                     ; family-cal (NextCloud calendar tool)
   #:use-module (alpha-agent nc-deck-share)                  ; nc-deck-share (Deck board ACL)
   #:use-module (alpha-agent mcp)                            ; pi-mcp-extension (MCP-client)
-  #:use-module (gnu packages certs)                         ; nss-certs (CA bundle for HTTPS tools)
+  #:use-module (gnu packages nss)                           ; nss-certs (CA bundle for HTTPS tools)
   #:use-module (guix gexp)                                  ; local-file, plain-file
   #:export (poppins poppins-launcher))
 
