@@ -150,6 +150,32 @@ DELETING an entire board or stack (that destroys all the cards in it).
    #:skill-md %poppins-deck-md
    #:synopsis "Manage the family Deck: own + share family boards so cards are visible"))
 
+(define %poppins-search-md
+  (plain-file "SKILL.md" "\
+---
+name: web-search
+description: Search the web and read pages via the family's private SearxNG.
+---
+
+# web-search
+
+You can search the internet with your MCP search tools (from the `search`
+server): `searxng_web_search` (returns web results — title, url, snippet) and
+`web_url_read` (fetch a page as markdown).  They query the family's OWN
+self-hosted SearxNG — private and Mullvad-routed — so use them freely.
+
+- Reach for web search whenever a question needs current or factual information
+  you don't already know (news, opening hours, prices, how-to, local events,
+  recommendations).  Don't guess when you can look it up.
+- Mention the source when it matters.  Keep the answer brief and familial.
+"))
+
+(define poppins-search-skill
+  (make-pi-skill
+   #:name "web-search"
+   #:skill-md %poppins-search-md
+   #:synopsis "Search the web + read pages via the family's private SearxNG (MCP)"))
+
 ;;; MCP servers for the pi-mcp-extension.  One server: the nextcloud-mcp sidecar
 ;;; on edison (host loopback, slice 3), giving the NextCloud hands
 ;;; (Deck/Calendar/Files/Contacts/Sharing).  `eager' = the extension connects +
@@ -168,6 +194,11 @@ DELETING an entire board or stack (that destroys all the cards in it).
       \"transport\": \"streamable-http\",
       \"url\": \"http://127.0.0.1:8000/mcp\",
       \"lifecycle\": \"eager\"
+    },
+    \"search\": {
+      \"transport\": \"streamable-http\",
+      \"url\": \"http://127.0.0.1:3000/mcp\",
+      \"lifecycle\": \"eager\"
     }
   }
 }
@@ -184,7 +215,7 @@ DELETING an entire board or stack (that destroys all the cards in it).
    ;; (the host's SSL_CERT_FILE path isn't valid there).  The wrapper points
    ;; SSL_CERT_FILE at this profile's bundle.
    (extra-packages (list nc-deck-share nss-certs))
-   (skills (list poppins-cal-skill poppins-deck-skill))
+   (skills (list poppins-cal-skill poppins-deck-skill poppins-search-skill))
    (extensions (list pi-mcp-extension))          ; MCP client (-> nextcloud-mcp)
    (mcp-config %poppins-mcp-json)                ; the server config (CFGDIR/mcp.json)
    ;; Personal-domain sandbox: open network (the LLM + NextCloud); NO cwd
